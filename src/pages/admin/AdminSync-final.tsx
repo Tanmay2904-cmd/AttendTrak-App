@@ -127,7 +127,11 @@ export default function AdminSync() {
       const records = await fetchFromGoogleSheet(sheetId, apiKey, `${tabName}!A2:F`);
 
       if (records.length === 0) {
-        throw new Error(`No attendance data found in tab "${tabName}".`);
+        throw new Error(
+          `No readable attendance data found in tab "${tabName}". ` +
+          `Make sure your sheet has data in columns: RollNo | Name | Date | Time | Status (starting row 2). ` +
+          `Also verify the tab name matches exactly (case-sensitive).`
+        );
       }
 
       localStorage.setItem('google_sheets_api_key', apiKey);

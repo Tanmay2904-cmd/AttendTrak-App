@@ -88,22 +88,46 @@ const parseRFIDEntry = (row: string[]): { date: string; time: string; name: stri
 };
 
 /**
+ * Normalize date strings to ISO format (YYYY-MM-DD)
+ * Handles:
+ *   DD-MM-YYYY  → YYYY-MM-DD  (your sheet format: "20-06-2026")
+ *   DD/MM/YYYY  → YYYY-MM-DD  (RFID format: "20/06/2026")
+ *   YYYY-MM-DD  → unchanged   (already ISO)
+ */
+const normalizeDate = (dateStr: string): string => {
+  if (!dateStr) return dateStr;
+
+  // DD-MM-YYYY or DD/MM/YYYY
+  const dmyMatch = dateStr.match(/^(\d{1,2})[-\/](\d{1,2})[-\/](\d{4})$/);
+  if (dmyMatch) {
+    const [, day, month, year] = dmyMatch;
+    return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+  }
+
+  // Already YYYY-MM-DD or other format — return as-is
+  return dateStr;
+};
+
+/**
  * Parse manual format (ROLL_NO | NAME | DATE | TIME | STATUS | SOURCE)
- * Input: ["ST001", "Tanmay Naigaonkar", "2025-04-30", "08:00", "present", "google sheets"]
+ * Accepts any roll number format: 101, BE001, ST001, A-01, etc.
  */
 const parseManualEntry = (row: string[]): { rollNo: string; name: string; date: string; time: string; status: string } | null => {
   try {
-    if (row.length < 4) return null;
+    if (row.length < 2) return null;
 
     const rollNo = String(row[0] || '').trim();
     const name = String(row[1] || '').trim();
-    const date = String(row[2] || '').trim();
+    const date = normalizeDate(String(row[2] || '').trim());
     const time = String(row[3] || '').trim();
     const status = String(row[4] || 'present').toLowerCase().trim();
 
-    // Check if it's manual format (has ROLL_NO like ST001)
-    if (rollNo.startsWith('ST') && !isNaN(parseInt(rollNo.substring(2)))) {
-      return { rollNo, name, date, time, status };
+    // Accept any non-empty roll number — not just "ST" prefix
+    // This handles formats like: 1, 101, BE001, A-01, ST001, etc.
+    if (rollNo && name) {
+      const validStatuses = ['present', 'absent', 'late'];
+      const normalizedStatus = validStatuses.includes(status) ? status : 'present';
+      return { rollNo, name, date, time, status: normalizedStatus };
     }
 
     return null;
@@ -164,19 +188,21 @@ export const fetchFromGoogleSheet = async (
     console.log(`📊 Total rows: ${rows.length}`);
 
     if (rows.length === 0) {
-      throw new Error('No data found in Google Sheet');
+      throw new Error(
+        'No data found in Google Sheet. Make sure the sheet tab name is correct and the sheet has data starting from row 2.'
+      );
     }
 
     const records: AttendanceRecord[] = [];
     const processedKeys = new Set<string>(); // Track duplicates
 
     rows.forEach((row: string[], idx: number) => {
-      if (!row || row.length < 3) return;
+      if (!row || row.length < 2) return;
 
-      // ✅ Try parsing as manual format first (ST001 | Name | Date | Time | Status)
+      // ✅ Try parsing as manual format first (RollNo | Name | Date | Time | Status)
       const manualEntry = parseManualEntry(row);
       if (manualEntry) {
-        const key = `${manualEntry.rollNo}-${manualEntry.date}`;
+        const key = `${manualEntry.rollNo}-${manualEntry.date}-${idx}`;
         if (!processedKeys.has(key)) {
           processedKeys.add(key);
           records.push({
@@ -222,7 +248,24 @@ export const fetchFromGoogleSheet = async (
             });
           }
         } else {
-          console.warn(`⚠️ Student not found in name mapping: "${rfidEntry.name}". Please add to nameToRollNoMap in sheetService.ts`);
+          // ✅ RFID format but name not in map — still store with name as rollNo fallback
+          console.warn(`⚠️ Student not found in name mapping: "${rfidEntry.name}". Storing with name as identifier.`);
+          const fallbackRoll = rfidEntry.name.replace(/\s+/g, '_').toUpperCase();
+          const key = `${fallbackRoll}-${rfidEntry.date}-${rfidEntry.time}`;
+          if (!processedKeys.has(key)) {
+            processedKeys.add(key);
+            records.push({
+              id: `${fallbackRoll}-${rfidEntry.date}-${rfidEntry.time}-${idx}`,
+              studentId: fallbackRoll,
+              userId: fallbackRoll,
+              name: rfidEntry.name,
+              rollNo: fallbackRoll,
+              date: rfidEntry.date,
+              time: rfidEntry.time,
+              status: determineStatus(rfidEntry.time),
+              source: 'rfid',
+            });
+          }
         }
       }
     });
