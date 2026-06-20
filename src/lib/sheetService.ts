@@ -112,7 +112,7 @@ const normalizeDate = (dateStr: string): string => {
  * Parse manual format (ROLL_NO | NAME | DATE | TIME | STATUS | SOURCE)
  * Accepts any roll number format: 101, BE001, ST001, A-01, etc.
  */
-const parseManualEntry = (row: string[]): { rollNo: string; name: string; date: string; time: string; status: string } | null => {
+const parseManualEntry = (row: string[]): { rollNo: string; name: string; date: string; time: string; status: string; source: string } | null => {
   try {
     if (row.length < 2) return null;
 
@@ -121,13 +121,16 @@ const parseManualEntry = (row: string[]): { rollNo: string; name: string; date: 
     const date = normalizeDate(String(row[2] || '').trim());
     const time = String(row[3] || '').trim();
     const status = String(row[4] || 'present').toLowerCase().trim();
+    // Read source from column F (row[5]) — e.g. "RFID" or "google sheets"
+    const rawSource = String(row[5] || '').trim().toLowerCase();
+    const source = rawSource === 'rfid' ? 'rfid' : 'google sheets';
 
     // Accept any non-empty roll number — not just "ST" prefix
     // This handles formats like: 1, 101, BE001, A-01, ST001, etc.
     if (rollNo && name) {
       const validStatuses = ['present', 'absent', 'late'];
       const normalizedStatus = validStatuses.includes(status) ? status : 'present';
-      return { rollNo, name, date, time, status: normalizedStatus };
+      return { rollNo, name, date, time, status: normalizedStatus, source };
     }
 
     return null;
@@ -214,7 +217,7 @@ export const fetchFromGoogleSheet = async (
             date: manualEntry.date,
             time: manualEntry.time,
             status: (manualEntry.status as 'present' | 'absent' | 'late'),
-            source: 'google sheets',
+            source: manualEntry.source,
           });
         }
         return;
