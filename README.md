@@ -71,3 +71,22 @@ export default defineConfig([
   },
 ])
 ```
+
+
+---
+
+## ?? QA & Testing Documentation
+
+This project includes structured QA documentation to demonstrate real-world testing practices.
+
+| Document | Description |
+|---|---|
+| [?? Test Cases](./qa-artifacts/AttenTrak_TestCases.csv) | 25+ manual test cases: RBAC, RFID sync, CSV Export, Real-time Data, Security |
+| [?? Bug Reports](./qa-artifacts/Bug_Reports.csv) | Defects logged with Severity, Priority, Steps-to-Reproduce & Resolution Status |
+
+**Testing Coverage:**
+- ? 25+ manual test cases (RBAC, Functional, Integration, Security, Edge Cases)
+- ? RFID hardware integration pipeline validated end-to-end
+- ? Real-time Firestore sync accuracy tested across 5+ concurrent sessions
+- ? CSV export data integrity verified across multiple class configurations
+- ? 3 user roles tested: Admin, User, Super Admin — permission boundaries confirmed

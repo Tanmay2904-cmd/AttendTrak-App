@@ -1,0 +1,21 @@
+TC_ID,Module,Test Scenario,Test Type,Test Steps,Expected Result,Actual Result,Status,Priority,Severity
+TC001,Login,Admin login with valid credentials,Positive,"1. Open app 2. Enter admin email 3. Enter correct password 4. Click Login",Admin redirected to Admin Dashboard,As Expected,Pass,High,Critical
+TC002,Login,User login with valid credentials,Positive,"1. Open app 2. Enter user email 3. Enter correct password 4. Click Login",User redirected to User Dashboard (no admin controls visible),As Expected,Pass,High,Critical
+TC003,Login,Super Admin login,Positive,"1. Login with Super Admin credentials",Super Admin dashboard with all controls visible,As Expected,Pass,High,Critical
+TC004,RBAC - Admin,Admin can view all class attendance,Security,"1. Login as Admin 2. Open attendance list",All students' attendance data visible for admin's classes,As Expected,Pass,High,Critical
+TC005,RBAC - User,User cannot see other classes,Security,"1. Login as User 2. Check available class list",Only own class data visible; no other class accessible,As Expected,Pass,High,Critical
+TC006,RBAC - Super Admin,Super Admin can view all admins,Security,"1. Login as Super Admin 2. Navigate to Admins section",List of all admins and their classes visible,As Expected,Pass,High,Critical
+TC007,Attendance - RFID,RFID scan marks attendance in real-time,Positive,"1. Scan RFID card 2. Observe dashboard within 3 seconds",Student marked Present with correct timestamp in dashboard,As Expected,Pass,High,Critical
+TC008,Attendance - RFID,Duplicate RFID scan does not duplicate entry,Negative,"1. Scan same RFID card twice within 1 minute",Only one attendance entry created; duplicate ignored,As Expected,Pass,High,Major
+TC009,Real-time Sync,Dashboard updates without page refresh,Positive,"1. Scan RFID 2. Observe dashboard without refreshing",New attendance entry appears automatically within 3 seconds,As Expected,Pass,High,Critical
+TC010,Real-time Sync,Multiple simultaneous scans,Stress,"1. Scan 5 different RFID cards rapidly 2. Check dashboard",All 5 entries appear correctly without data loss or duplication,As Expected,Pass,High,Major
+TC011,CSV Export,Export attendance for a class,Positive,"1. Login as Admin 2. Select class 3. Click Export CSV",CSV file downloaded with correct columns: Roll No, Name, Date, Status,As Expected,Pass,High,Major
+TC012,CSV Export,Verify date format in CSV,Positive,"1. Export CSV 2. Open file 3. Check date column",Date in DD-MM-YYYY format matching session date,As Expected,Pass,High,Minor
+TC013,CSV Export,Verify roll number format in CSV,Positive,"1. Export CSV 2. Check roll number column",Roll numbers match student registration format (e.g. 2021BTIT001),As Expected,Pass,High,Minor
+TC014,CSV Export,Export empty class attendance,Edge Case,"1. Create class with no attendance 2. Click Export CSV",Empty CSV with headers only; no error thrown,As Expected,Pass,Medium,Minor
+TC015,Multi-class,Admin switches between classes,Positive,"1. Login as Admin 2. Select Class A 3. Switch to Class B",Attendance data updates to reflect selected class only,As Expected,Pass,High,Major
+TC016,Data Integrity,Absent students marked correctly,Positive,"1. Check students not scanned today 2. Compare with attendance record",Non-scanned students marked as Absent for that session,As Expected,Pass,High,Major
+TC017,Permission,User tries to access admin URL,Security,"1. Login as User 2. Manually enter /admin in URL",Redirected to own dashboard or Access Denied,As Expected,Pass,High,Critical
+TC018,Permission,Admin tries to access super-admin panel,Security,"1. Login as Admin 2. Manually enter /superadmin in URL",Redirected away or Access Denied,As Expected,Pass,High,Critical
+TC019,Smoke,App loads on mobile browser,Smoke,"1. Open app on mobile browser 2. Observe layout",App renders correctly and login form is usable,As Expected,Pass,Medium,Major
+TC020,Regression,Full attendance session flow,End-to-End,"1. Admin starts session 2. RFID scans happen 3. Check dashboard 4. Export CSV",All steps function correctly; data consistent across all views,As Expected,Pass,High,Critical
